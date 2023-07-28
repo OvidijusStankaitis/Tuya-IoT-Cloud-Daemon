@@ -1,79 +1,88 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <syslog.h>
+
+#include "tuyaConnect.h"
+#include "daemon.h"
+#include "argParser.h"
 
 #include "cJSON.h"
-#include "tuya_cacert.h"
-#include "tuya_log.h"
-#include "tuya_error_code.h"
-#include "system_interface.h"
-#include "mqtt_client_interface.h"
-#include "tuyalink_core.h"
 
-const char productId[] = "agcfuzi9mnras1gs";
-const char deviceId[] = "262e7e1c9162ca6b27kvcl";
-const char deviceSecret[] = "AkCmJ4AXgdgHdi8Y";
+#define DEV_INFO_FILE 16
 
 tuya_mqtt_context_t client_instance;
 
-void on_connected(tuya_mqtt_context_t* context, void* user_data)
+int main(int argc, char **argv)
 {
-    TY_LOGI("on connected");
-    tuyalink_subdevice_bind(context, "[{\"productId\":\"xankwfjqkkhd0dct\",\"nodeId\":\"123455\",\"clientId\":\"123455asdf\"}]");
-    tuyalink_subdevice_topo_get(context);
-}
+  char deviceFile[DEV_INFO_FILE];
+  strncpy(deviceFile, argv[1], DEV_INFO_FILE - 1);
+  deviceFile[DEV_INFO_FILE - 1] = '\0';
+  printf("%s\n", deviceFile);
 
-void on_disconnect(tuya_mqtt_context_t* context, void* user_data)
-{
-    TY_LOGI("on disconnect");
-}
+  FILE *deviceInfo = fopen(deviceFile, "r");
 
-void on_messages(tuya_mqtt_context_t* context, void* user_data, const tuyalink_message_t* msg)
-{
-    TY_LOGI("on message id:%s, type:%d, code:%d", msg->msgid, msg->type, msg->code);
-    switch (msg->type) {
-        case THING_TYPE_DEVICE_SUB_BIND_RSP:
-            TY_LOGI("bind response:%s\r\n", msg->data_string);
-            break;
+  if (deviceInfo == NULL)
+  {
+    syslog(LOG_ERR, "Error opening file %s", deviceFile);
+  }
 
-        case THING_TYPE_DEVICE_TOPO_GET_RSP:
-            TY_LOGI("get topo response:%s\r\n", msg->data_string);
-            break;
+  // Read the file into a string
+  fseek(deviceInfo, 0, SEEK_END);
+  long length = ftell(deviceInfo);
+  fseek(deviceInfo, 0, SEEK_SET);
+  char *data = malloc(length + 1);
+  if (data)
+  {
+      fread(data, 1, length, deviceInfo);
+  }
+  fclose(deviceInfo);
+  data[length] = '\0'; // Null-terminate the string
 
-        default:
-            break;
-    }
-    printf("\r\n");
-}
+  // Parse the JSON
+  cJSON *json = cJSON_Parse(data);
+  if (json == NULL)
+  {
+      const char *error_ptr = cJSON_GetErrorPtr();
+      if (error_ptr != NULL)
+      {
+          fprintf(stderr, "Error before: %s\n", error_ptr);
+      }
+      return 1;
+  }
 
-int main(int argc, char** argv)
-{
-    int ret = OPRT_OK;
+  // Get the values
+  cJSON *productId = cJSON_GetObjectItemCaseSensitive(json, "productId");
+  cJSON *deviceId = cJSON_GetObjectItemCaseSensitive(json, "deviceId");
+  cJSON *deviceSecret = cJSON_GetObjectItemCaseSensitive(json, "deviceSecret");
 
-    tuya_mqtt_context_t* client = &client_instance;
+  if (cJSON_IsString(productId) && (productId->valuestring != NULL))
+  {
+      printf("productId: %s\n", productId->valuestring);
+  }
 
-    ret = tuya_mqtt_init(client, &(const tuya_mqtt_config_t) {
-        .host = "m1.tuyacn.com",
-        .port = 8883,
-        .cacert = tuya_cacert_pem,
-        .cacert_len = sizeof(tuya_cacert_pem),
-        .device_id = deviceId,
-        .device_secret = deviceSecret,
-        .keepalive = 100,
-        .timeout_ms = 2000,
-        .on_connected = on_connected,
-        .on_disconnect = on_disconnect,
-        .on_messages = on_messages
-    });
-    assert(ret == OPRT_OK);
+  if (cJSON_IsString(deviceId) && (deviceId->valuestring != NULL))
+  {
+      printf("deviceId: %s\n", deviceId->valuestring);
+  }
 
-    ret = tuya_mqtt_connect(client);
-    assert(ret == OPRT_OK);
+  if (cJSON_IsString(deviceSecret) && (deviceSecret->valuestring != NULL))
+  {
+      printf("deviceSecret: %s\n", deviceSecret->valuestring);
+  }
 
-    for (;;) {
-        /* Loop to receive packets, and handles client keepalive */
-        tuya_mqtt_loop(client);
-    }
+  // Clean up
+  cJSON_Delete(json);
+  free(data);
 
-    return ret;
+  tuya_mqtt_context_t *client = &client_instance;
+  tuya_connect(client);
+
+  for (;;)
+  {
+    tuya_mqtt_loop(client);
+  }
+
+  return 0;
 }
