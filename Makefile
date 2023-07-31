@@ -1,6 +1,6 @@
 CFLAGS=-Wall -I./lib
 LDFLAGS=-L./lib -llink_core -lutils_modules -lplatform_port -lmiddleware_implementation -Wl,-rpath,'$$ORIGIN/lib'
-SOURCES=src/main.c src/tuyaConnect.c src/argParser.c src/daemon.c
+SOURCES=src/main.c src/tuyaConnect.c src/argParser.c src/daemon.c src/getSysInfo.c
 OBJECTS=$(SOURCES:.c=.o)
 EXECUTABLE=main
 

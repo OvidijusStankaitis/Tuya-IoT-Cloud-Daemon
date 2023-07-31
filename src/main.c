@@ -1,87 +1,50 @@
 #include <assert.h>
+#include <argp.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
+#include <unistd.h>
 
 #include "tuyaConnect.h"
 #include "daemon.h"
 #include "argParser.h"
 
-#include "cJSON.h"
+#include "tuyalink_core.h"
+#include "getSysInfo.h"
 
-#define DEV_INFO_FILE 16
+#define DATA_LEN 30
 
 tuya_mqtt_context_t client_instance;
 
 int main(int argc, char **argv)
 {
-  char deviceFile[DEV_INFO_FILE];
-  strncpy(deviceFile, argv[1], DEV_INFO_FILE - 1);
-  deviceFile[DEV_INFO_FILE - 1] = '\0';
-  printf("%s\n", deviceFile);
+  Arguments args;
+  parse_arguments(argc, argv, &args);
 
-  FILE *deviceInfo = fopen(deviceFile, "r");
+  printf("Product ID: %s\n", args.productId);
+  printf("Device ID: %s\n", args.deviceId);
+  printf("Device Secret: %s\n", args.deviceSecret);
 
-  if (deviceInfo == NULL)
-  {
-    syslog(LOG_ERR, "Error opening file %s", deviceFile);
-  }
+  char productId[DATA_LEN];
+  char deviceId[DATA_LEN];
+  char deviceSecret[DATA_LEN];
 
-  // Read the file into a string
-  fseek(deviceInfo, 0, SEEK_END);
-  long length = ftell(deviceInfo);
-  fseek(deviceInfo, 0, SEEK_SET);
-  char *data = malloc(length + 1);
-  if (data)
-  {
-      fread(data, 1, length, deviceInfo);
-  }
-  fclose(deviceInfo);
-  data[length] = '\0'; // Null-terminate the string
+  strcpy(productId, args.productId);
+  strcpy(deviceId, args.deviceId);
+  strcpy(deviceSecret, args.deviceSecret);
 
-  // Parse the JSON
-  cJSON *json = cJSON_Parse(data);
-  if (json == NULL)
-  {
-      const char *error_ptr = cJSON_GetErrorPtr();
-      if (error_ptr != NULL)
-      {
-          fprintf(stderr, "Error before: %s\n", error_ptr);
-      }
-      return 1;
-  }
-
-  // Get the values
-  cJSON *productId = cJSON_GetObjectItemCaseSensitive(json, "productId");
-  cJSON *deviceId = cJSON_GetObjectItemCaseSensitive(json, "deviceId");
-  cJSON *deviceSecret = cJSON_GetObjectItemCaseSensitive(json, "deviceSecret");
-
-  if (cJSON_IsString(productId) && (productId->valuestring != NULL))
-  {
-      printf("productId: %s\n", productId->valuestring);
-  }
-
-  if (cJSON_IsString(deviceId) && (deviceId->valuestring != NULL))
-  {
-      printf("deviceId: %s\n", deviceId->valuestring);
-  }
-
-  if (cJSON_IsString(deviceSecret) && (deviceSecret->valuestring != NULL))
-  {
-      printf("deviceSecret: %s\n", deviceSecret->valuestring);
-  }
-
-  // Clean up
-  cJSON_Delete(json);
-  free(data);
-
+  initID(productId, deviceId, deviceSecret);
   tuya_mqtt_context_t *client = &client_instance;
   tuya_connect(client);
 
   for (;;)
   {
     tuya_mqtt_loop(client);
+    long int memory_usage = get_memory_usage();
+    send_memory_usage_to_tuya(client, memory_usage);
+    sleep(10);
+
   }
 
   return 0;

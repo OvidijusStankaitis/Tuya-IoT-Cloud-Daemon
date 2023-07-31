@@ -1,9 +1,26 @@
-#include "tuyaConnect.h"
+#include <assert.h>
+#include <stdio.h>
+#include <string.h>
+#include <syslog.h>
+
+#include "tuya_error_code.h"
+#include "system_interface.h"
+#include "mqtt_client_interface.h"
+#include "tuyalink_core.h"
 #include "tuya_cacert.h"
 
-const char productId[] = "agcfuzi9mnras1gs";
-const char deviceId[] = "262e7e1c9162ca6b27kvcl";
-const char deviceSecret[] = "AkCmJ4AXgdgHdi8Y";
+#include "tuyaConnect.h"
+
+char productId[DATA_LEN];
+char deviceId[DATA_LEN];
+char deviceSecret[DATA_LEN];
+
+void initID(char pId[], char dId[], char dSecret[])
+{
+  strcpy(productId, pId);
+  strcpy(deviceId, dId);
+  strcpy(deviceSecret, dSecret);
+}
 
 void on_connected(tuya_mqtt_context_t* context, void* user_data)
 {
@@ -54,4 +71,12 @@ void tuya_connect(tuya_mqtt_context_t* client)
 
     ret = tuya_mqtt_connect(client);
     assert(ret == OPRT_OK);
+}
+
+void send_memory_usage_to_tuya(tuya_mqtt_context_t* client, long int memory_usage)
+{
+    char data[256];
+    snprintf(data, sizeof(data), "{\"MemoryUsage\":%ld}", memory_usage);
+
+    tuyalink_thing_property_report(client, deviceId ,data);
 }

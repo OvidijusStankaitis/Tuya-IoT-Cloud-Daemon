@@ -1,14 +1,7 @@
+#include "tuyalink_core.h"
+
 #ifndef TUYA_CONNECT_H
 #define TUYA_CONNECT_H
-
-#include <assert.h>
-#include <stdio.h>
-#include <syslog.h>
-// #include "tuya_log.h"
-#include "tuya_error_code.h"
-#include "system_interface.h"
-#include "mqtt_client_interface.h"
-#include "tuyalink_core.h"
 
 #define DATA_LEN 30
 
@@ -19,6 +12,8 @@ struct Device
   char deviceSecret[DATA_LEN];
 };
 
+void initID(char pId[], char dId[], char dSecret[]);
 void tuya_connect(tuya_mqtt_context_t *client);
+void send_memory_usage_to_tuya(tuya_mqtt_context_t* client, long int memory_usage);
 
-#endif // TUYA_CONNECT_H
+#endif 
