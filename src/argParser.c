@@ -11,12 +11,13 @@ static struct argp_option options[] = {
     {"deviceId", 'd', "DEVICEID", 0, "Device ID"},
     {"productId", 'p', "PRODUCTID", 0, "Product ID"},
     {"deviceSecret", 's', "DEVICESECRET", 0, "Device Secret"},
-    {0}
-};
+    {0}};
 
-static error_t parse_opt(int key, char *arg, struct argp_state *state) {
+static error_t parse_opt(int key, char *arg, struct argp_state *state)
+{
     Arguments *args = state->input;
-    switch (key) {
+    switch (key)
+    {
     case 'd':
         args->deviceId = arg;
         break;
@@ -34,6 +35,7 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
 
 static struct argp argp = {options, parse_opt, 0, doc};
 
-void parse_arguments(int argc, char **argv, Arguments *args) {
+void parse_arguments(int argc, char **argv, Arguments *args)
+{
     argp_parse(&argp, argc, argv, 0, 0, args);
 }

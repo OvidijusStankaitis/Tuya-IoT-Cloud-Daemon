@@ -5,7 +5,7 @@
 
 long int get_memory_usage()
 {
-    FILE* file = fopen("/proc/meminfo", "r");
+    FILE *file = fopen("/proc/meminfo", "r");
     if (file == NULL)
     {
         perror("fopen");
