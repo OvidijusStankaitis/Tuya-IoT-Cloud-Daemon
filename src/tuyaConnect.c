@@ -71,11 +71,9 @@ void tuya_connect(tuya_mqtt_context_t *client)
                                      .on_disconnect = on_disconnect,
                                      .on_messages = on_messages});
     syslog(LOG_INFO, "tuya_mqtt_init return status: %d", ret);
-    assert(ret == OPRT_OK);
 
     ret = tuya_mqtt_connect(client);
     syslog(LOG_INFO, "tuya_mqtt_connect return status: %d", ret);
-    assert(ret == OPRT_OK);
 }
 
 void send_memory_usage_to_tuya(tuya_mqtt_context_t *client, long int memory_usage)
