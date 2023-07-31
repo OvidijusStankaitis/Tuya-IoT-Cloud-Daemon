@@ -20,6 +20,9 @@ void initID(char pId[], char dId[], char dSecret[])
     strcpy(productId, pId);
     strcpy(deviceId, dId);
     strcpy(deviceSecret, dSecret);
+
+    openlog("tuyaConnect", LOG_PID|LOG_CONS, LOG_USER);
+    syslog(LOG_INFO, "Initialized device IDs");
 }
 
 void on_connected(tuya_mqtt_context_t *context, void *user_data)
@@ -67,9 +70,11 @@ void tuya_connect(tuya_mqtt_context_t *client)
                                      .on_connected = on_connected,
                                      .on_disconnect = on_disconnect,
                                      .on_messages = on_messages});
+    syslog(LOG_INFO, "tuya_mqtt_init return status: %d", ret);
     assert(ret == OPRT_OK);
 
     ret = tuya_mqtt_connect(client);
+    syslog(LOG_INFO, "tuya_mqtt_connect return status: %d", ret);
     assert(ret == OPRT_OK);
 }
 
@@ -79,4 +84,5 @@ void send_memory_usage_to_tuya(tuya_mqtt_context_t *client, long int memory_usag
     snprintf(data, sizeof(data), "{\"MemoryUsage\":{\"value\":%ld}}", memory_usage);
 
     tuyalink_thing_property_report(client, deviceId, data);
+    closelog();
 }

@@ -1,14 +1,16 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <syslog.h>
 
 #include "getSysInfo.h"
 
 long int get_memory_usage()
 {
+    openlog("getSysInfo", LOG_PID|LOG_CONS, LOG_USER);
     FILE *file = fopen("/proc/meminfo", "r");
     if (file == NULL)
     {
-        perror("fopen");
+        syslog(LOG_ERR, "Error opening /proc/meminfo");
         return -1;
     }
 
@@ -40,6 +42,8 @@ long int get_memory_usage()
 
     fclose(file);
 
-    int used_memory = total_memory - free_memory - buffers - cached;
-    return (long)used_memory * 1024;
+    long int used_memory = (total_memory - free_memory - buffers - cached) * 1024;
+    syslog(LOG_INFO, "Memory usage calculated: %ld", used_memory);
+    closelog();
+    return used_memory;
 }
