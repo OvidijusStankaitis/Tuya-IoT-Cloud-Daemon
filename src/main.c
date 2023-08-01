@@ -18,11 +18,13 @@ tuya_mqtt_context_t client_instance;
 
 int stop_loop = 0;
 
-void handle_signal(int sig) {
-    if (sig == SIGINT || sig == SIGTERM || sig == SIGQUIT) {
-        syslog(LOG_INFO, "Received signal to terminate. Disconnecting from Tuya...");
-        stop_loop = 1;
-    }
+void handle_signal(int sig)
+{
+  if (sig == SIGINT || sig == SIGTERM || sig == SIGQUIT)
+  {
+    syslog(LOG_INFO, "Received signal to terminate. Disconnecting from Tuya...");
+    stop_loop = 1;
+  }
 }
 
 int main(int argc, char **argv)
@@ -45,8 +47,6 @@ int main(int argc, char **argv)
   strcpy(deviceId, args.deviceId);
   strcpy(deviceSecret, args.deviceSecret);
   strcpy(daemon, args.daemonize);
-
-  printf("daemon: %s\n", daemon);
 
   if (!strcmp(daemon, "yes"))
   {

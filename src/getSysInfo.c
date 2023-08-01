@@ -6,7 +6,7 @@
 
 long int get_memory_usage()
 {
-    openlog("getSysInfo", LOG_PID|LOG_CONS, LOG_USER);
+    openlog("getSysInfo", LOG_PID | LOG_CONS, LOG_USER);
     FILE *file = fopen("/proc/meminfo", "r");
     if (file == NULL)
     {

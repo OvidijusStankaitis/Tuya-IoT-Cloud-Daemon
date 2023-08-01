@@ -42,12 +42,12 @@ static struct argp argp = {options, parse_opt, 0};
 
 void parse_arguments(int argc, char **argv, Arguments *args)
 {
-    openlog("argParser", LOG_PID|LOG_CONS, LOG_USER);
+    openlog("argParser", LOG_PID | LOG_CONS, LOG_USER);
     argp_parse(&argp, argc, argv, 0, 0, args);
 
-    if (!args->deviceId || !args->productId || !args->deviceSecret || !args->daemonize) 
+    if (!args->deviceId || !args->productId || !args->deviceSecret || !args->daemonize)
     {
-        if(args->help)
+        if (args->help)
         {
             syslog(LOG_INFO, "Help message requested.");
             printf("Device ID \t-d \t--deviceId\n");
@@ -59,7 +59,7 @@ void parse_arguments(int argc, char **argv, Arguments *args)
             closelog();
             exit(EXIT_SUCCESS);
         }
-        else 
+        else
         {
             syslog(LOG_ERR, "You must specify all arguments: deviceId, productId, and deviceSecret.");
             printf("tuya_cloud_daemon: too few arguments specified\n");
