@@ -8,6 +8,8 @@ typedef struct Arguments
     char *productId;
     char *deviceId;
     char *deviceSecret;
+    char *daemonize;
+    int help;
 } Arguments;
 
 void parse_arguments(int argc, char **argv, Arguments *args);

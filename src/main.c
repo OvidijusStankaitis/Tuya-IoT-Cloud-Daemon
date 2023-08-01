@@ -19,7 +19,7 @@ tuya_mqtt_context_t client_instance;
 int stop_loop = 0;
 
 void handle_signal(int sig) {
-    if (sig == SIGINT || sig == SIGTERM) {
+    if (sig == SIGINT || sig == SIGTERM || sig == SIGQUIT) {
         syslog(LOG_INFO, "Received signal to terminate. Disconnecting from Tuya...");
         stop_loop = 1;
     }
@@ -27,6 +27,10 @@ void handle_signal(int sig) {
 
 int main(int argc, char **argv)
 {
+  signal(SIGINT, handle_signal);
+  signal(SIGTERM, handle_signal);
+  signal(SIGQUIT, handle_signal);
+
   openlog("Connetion", LOG_PID | LOG_CONS, LOG_USER);
   syslog(LOG_INFO, "Parsing arguments..");
 
@@ -36,12 +40,20 @@ int main(int argc, char **argv)
   char productId[DATA_LEN];
   char deviceId[DATA_LEN];
   char deviceSecret[DATA_LEN];
-
+  char daemon[DATA_LEN];
   strcpy(productId, args.productId);
   strcpy(deviceId, args.deviceId);
   strcpy(deviceSecret, args.deviceSecret);
-  signal(SIGINT, handle_signal);
-  signal(SIGTERM, handle_signal);
+  strcpy(daemon, args.daemonize);
+
+  printf("daemon: %s\n", daemon);
+
+  if (!strcmp(daemon, "yes"))
+  {
+    syslog(LOG_INFO, "Daemonizing process...");
+    daemonize();
+  }
+
   tuya_mqtt_context_t *client = &client_instance;
   tuya_connect(client, deviceId, deviceSecret);
 
