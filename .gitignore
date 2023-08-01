@@ -1,3 +1,4 @@
 *.o
 tuya_cloud_daemon
 deviceInfo.txt
+tuyaConnect.log

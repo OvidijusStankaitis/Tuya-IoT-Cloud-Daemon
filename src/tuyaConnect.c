@@ -11,6 +11,24 @@
 
 #include "tuyaConnect.h"
 
+void outToFile(char *str)
+{
+    FILE *fp;
+    fp = fopen("tuyaConnect.log", "a+");
+    fseek(fp, 0, SEEK_END);
+    fprintf(fp, "%s\n", str);
+    fclose(fp);
+}
+
+char* parse_string(const char *json_string) {
+    cJSON *json_data = cJSON_Parse(json_string);
+    cJSON *inputParams = cJSON_GetObjectItemCaseSensitive(json_data, "inputParams");
+    cJSON *string_item = cJSON_GetObjectItemCaseSensitive(inputParams, "string");
+    char *result = strdup(string_item->valuestring);
+    cJSON_Delete(json_data);
+    return result;
+}
+
 void on_connected(tuya_mqtt_context_t *context, void *user_data)
 {
     syslog(LOG_INFO, "Connected");
@@ -33,7 +51,12 @@ void on_messages(tuya_mqtt_context_t *context, void *user_data, const tuyalink_m
     case THING_TYPE_DEVICE_TOPO_GET_RSP:
         syslog(LOG_INFO, "get topo response:%s\r\n", msg->data_string);
         break;
-
+    case THING_TYPE_ACTION_EXECUTE:
+        syslog(LOG_INFO, "action execute:%s\r\n", msg->data_string);
+        // outToFile(msg->data_string);
+        char *result = parse_string(msg->data_string);
+        outToFile(result);
+        break;
     default:
         break;
     }

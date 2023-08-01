@@ -63,7 +63,7 @@ int main(int argc, char **argv)
     long int memory_usage = get_memory_usage();
     send_memory_usage_to_tuya(client, memory_usage, deviceId);
     syslog(LOG_INFO, "Sent memory usage to Tuya: %ld", memory_usage);
-    sleep(5);
+    sleep(1);
   }
 
   tuya_mqtt_disconnect(client);
