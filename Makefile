@@ -14,3 +14,17 @@ $(EXECUTABLE): $(OBJECTS)
 
 clean:
 	rm -rf $(OBJECTS) $(EXECUTABLE)
+
+PREFIX=/usr/local
+
+install-lib:
+	install -m 644 lib/*.h $(PREFIX)/include
+	install -m 644 lib/*.so $(PREFIX)/lib
+	ldconfig
+
+uninstall-lib:
+	for file in $(wildcard lib/*.h); do $(RM) $(PREFIX)/include/`basename $$file`; done
+	for file in $(wildcard lib/*.so); do $(RM) $(PREFIX)/lib/`basename $$file`; done
+	ldconfig
+
+.PHONY: all clean install-lib uninstall-lib

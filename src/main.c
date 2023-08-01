@@ -16,12 +16,12 @@
 
 tuya_mqtt_context_t client_instance;
 
+int stop_loop = 0;
+
 void handle_signal(int sig) {
     if (sig == SIGINT || sig == SIGTERM) {
         syslog(LOG_INFO, "Received signal to terminate. Disconnecting from Tuya...");
-        tuya_mqtt_disconnect(&client_instance);
-        syslog(LOG_INFO, "Disconnected from Tuya. Exiting...");
-        exit(0);
+        stop_loop = 1;
     }
 }
 
@@ -40,25 +40,24 @@ int main(int argc, char **argv)
   strcpy(productId, args.productId);
   strcpy(deviceId, args.deviceId);
   strcpy(deviceSecret, args.deviceSecret);
-
-  // daemonize();
-  initID(productId, deviceId, deviceSecret);
+  signal(SIGINT, handle_signal);
+  signal(SIGTERM, handle_signal);
   tuya_mqtt_context_t *client = &client_instance;
-  tuya_connect(client);
+  tuya_connect(client, deviceId, deviceSecret);
 
-
-  for (;;)
+  while (!stop_loop)
   {
-    tuya_mqtt_loop(client);
-    signal(SIGINT, handle_signal);
-    signal(SIGTERM, handle_signal);
+    tuya_mqtt_loop(&client_instance);
     long int memory_usage = get_memory_usage();
-    send_memory_usage_to_tuya(client, memory_usage);
+    send_memory_usage_to_tuya(client, memory_usage, deviceId);
     syslog(LOG_INFO, "Sent memory usage to Tuya: %ld", memory_usage);
-    sleep(10);
+    sleep(5);
   }
 
-  closelog();
+  tuya_mqtt_disconnect(client);
+  tuya_mqtt_deinit(client);
+  syslog(LOG_INFO, "Disconnected from Tuya. Exiting...");
 
+  closelog();
   return 0;
 }

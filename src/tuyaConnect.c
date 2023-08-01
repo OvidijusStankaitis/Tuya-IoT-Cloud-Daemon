@@ -11,20 +11,6 @@
 
 #include "tuyaConnect.h"
 
-char productId[DATA_LEN];
-char deviceId[DATA_LEN];
-char deviceSecret[DATA_LEN];
-
-void initID(char pId[], char dId[], char dSecret[])
-{
-    strcpy(productId, pId);
-    strcpy(deviceId, dId);
-    strcpy(deviceSecret, dSecret);
-
-    openlog("tuyaConnect", LOG_PID|LOG_CONS, LOG_USER);
-    syslog(LOG_INFO, "Initialized device IDs");
-}
-
 void on_connected(tuya_mqtt_context_t *context, void *user_data)
 {
     syslog(LOG_INFO, "Connected");
@@ -54,7 +40,7 @@ void on_messages(tuya_mqtt_context_t *context, void *user_data, const tuyalink_m
     printf("\r\n");
 }
 
-void tuya_connect(tuya_mqtt_context_t *client)
+void tuya_connect(tuya_mqtt_context_t *client, char dId[], char dSecret[])
 {
     int ret = OPRT_OK;
 
@@ -63,8 +49,8 @@ void tuya_connect(tuya_mqtt_context_t *client)
                                      .port = 8883,
                                      .cacert = tuya_cacert_pem,
                                      .cacert_len = sizeof(tuya_cacert_pem),
-                                     .device_id = deviceId,
-                                     .device_secret = deviceSecret,
+                                     .device_id = dId,
+                                     .device_secret = dSecret,
                                      .keepalive = 100,
                                      .timeout_ms = 2000,
                                      .on_connected = on_connected,
@@ -76,7 +62,7 @@ void tuya_connect(tuya_mqtt_context_t *client)
     syslog(LOG_INFO, "tuya_mqtt_connect return status: %d", ret);
 }
 
-void send_memory_usage_to_tuya(tuya_mqtt_context_t *client, long int memory_usage)
+void send_memory_usage_to_tuya(tuya_mqtt_context_t *client, long int memory_usage, char deviceId[])
 {
     char data[256];
     snprintf(data, sizeof(data), "{\"MemoryUsage\":{\"value\":%ld}}", memory_usage);

@@ -1,2 +1,3 @@
 *.o
-daemon
+tuya_cloud_daemon
+deviceInfo.txt
