@@ -8,7 +8,7 @@ typedef struct Arguments
     char *productId;
     char *deviceId;
     char *deviceSecret;
-    char *daemonize;
+    int daemonize;
     int help;
 } Arguments;
 

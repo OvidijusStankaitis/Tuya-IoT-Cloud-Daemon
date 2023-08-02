@@ -8,9 +8,10 @@
 #include "tuyaConnect.h"
 #include "argParser.h"
 #include "daemon.h"
+#include "getSysInfo.h"
 
 #include "tuyalink_core.h"
-#include "getSysInfo.h"
+#include "tuya_error_code.h"
 
 #define DATA_LEN 30
 
@@ -29,46 +30,49 @@ void handle_signal(int sig)
 
 int main(int argc, char **argv)
 {
-  signal(SIGINT, handle_signal);
-  signal(SIGTERM, handle_signal);
-  signal(SIGQUIT, handle_signal);
-
-  openlog("Connetion", LOG_PID | LOG_CONS, LOG_USER);
-  syslog(LOG_INFO, "Parsing arguments..");
-
+  openlog("tuya_cloud_daemon", LOG_PID | LOG_CONS, LOG_USER);
   Arguments args;
   parse_arguments(argc, argv, &args);
 
-  char productId[DATA_LEN];
-  char deviceId[DATA_LEN];
-  char deviceSecret[DATA_LEN];
-  char daemon[DATA_LEN];
-  strcpy(productId, args.productId);
-  strcpy(deviceId, args.deviceId);
-  strcpy(deviceSecret, args.deviceSecret);
-  strcpy(daemon, args.daemonize);
-
-  if (!strcmp(daemon, "yes"))
+  if (args.daemonize)
   {
-    syslog(LOG_INFO, "Daemonizing process...");
     daemonize();
+    syslog(LOG_INFO, "Daemon started");
   }
 
   tuya_mqtt_context_t *client = &client_instance;
-  tuya_connect(client, deviceId, deviceSecret);
+  int ret = tuya_connect(client, args.deviceId, args.deviceSecret);
+
+  switch (ret)
+  {
+    case 1:
+      return 1;
+      break;
+    case -1:
+      tuya_mqtt_deinit(client);
+      return 1;
+      break;
+    case OPRT_OK:
+      syslog(LOG_INFO, "Connected to Tuya");
+      break;
+    default:
+      break;
+  }
 
   while (!stop_loop)
   {
     tuya_mqtt_loop(&client_instance);
     long int memory_usage = get_memory_usage();
-    send_memory_usage_to_tuya(client, memory_usage, deviceId);
-    syslog(LOG_INFO, "Sent memory usage to Tuya: %ld", memory_usage);
+    if(memory_usage > 0) {
+      send_memory_usage_to_tuya(client, memory_usage, args.deviceId);
+      syslog(LOG_INFO, "Sent memory usage to Tuya: %ld", memory_usage);
+    }
     sleep(1);
   }
 
   tuya_mqtt_disconnect(client);
   tuya_mqtt_deinit(client);
-  syslog(LOG_INFO, "Disconnected from Tuya. Exiting...");
+  syslog(LOG_INFO, "Disconnected from Tuya");
 
   closelog();
   return 0;

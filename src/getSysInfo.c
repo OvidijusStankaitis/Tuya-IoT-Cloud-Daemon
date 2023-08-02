@@ -6,7 +6,6 @@
 
 long int get_memory_usage()
 {
-    openlog("getSysInfo", LOG_PID | LOG_CONS, LOG_USER);
     FILE *file = fopen("/proc/meminfo", "r");
     if (file == NULL)
     {
@@ -44,6 +43,5 @@ long int get_memory_usage()
 
     long int used_memory = (total_memory - free_memory - buffers - cached) * 1024;
     syslog(LOG_INFO, "Memory usage calculated: %ld", used_memory);
-    closelog();
     return used_memory;
 }

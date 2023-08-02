@@ -16,5 +16,5 @@ sudo make install-lib / make uninstall-lib
 ```
 * Run the program:
 ```bash
-./tuya_cloud_daemon -d <device_id> -p <product_id> -s <device_secret> -D <yes/no>
+./tuya_cloud_daemon -d <device_id> -p <product_id> -s <device_secret> -D
 ```

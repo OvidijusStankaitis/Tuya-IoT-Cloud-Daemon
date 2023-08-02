@@ -10,7 +10,6 @@
 
 void daemonize()
 {
-    openlog("Daemon", LOG_PID | LOG_CONS, LOG_USER);
     pid_t pid;
 
     pid = fork();
@@ -58,9 +57,4 @@ void daemonize()
     {
         close(x);
     }
-
-    syslog(LOG_INFO, "Starting daemon...");
-    syslog(LOG_INFO, "Daemon started.");
-
-    closelog();
 }
