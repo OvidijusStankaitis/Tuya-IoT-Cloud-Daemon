@@ -5,7 +5,6 @@
 #include <signal.h>
 #include <unistd.h>
 #include <stdbool.h>
-#include <setjmp.h>
 
 #include "tuyaConnect.h"
 #include "argParser.h"
@@ -19,20 +18,14 @@
 
 tuya_mqtt_context_t client_instance;
 tuya_mqtt_context_t *client = &client_instance;
-static jmp_buf jmpbuf;
-static bool run = false;
+static bool run = true;
 
 static void handle_signal(int sig)
 {
 	if (sig == SIGINT || sig == SIGTERM || sig == SIGQUIT)
 	{
-		if (run)
-		{
-			syslog(LOG_INFO, "Received signal to terminate. Disconnecting from Tuya...");
-			siglongjmp(jmpbuf, 1);
-		}
-
-		exit(0);
+		syslog(LOG_INFO, "Received signal to terminate. Disconnecting from Tuya...");
+		run = false;
 	}
 }
 
@@ -59,16 +52,8 @@ int main(int argc, char **argv)
 		goto cleanup;
 	}
 
-	run = true;
-
 	while (run)
 	{
-		if (sigsetjmp(jmpbuf, 1))
-		{
-			run = false;
-			goto cleanup;
-		}
-
 		tuya_mqtt_loop(client);
 		double memory_usage = get_memory_usage();
 		if (memory_usage > 0)
@@ -76,7 +61,7 @@ int main(int argc, char **argv)
 			send_memory_usage_to_tuya(client, memory_usage, args.deviceId);
 			syslog(LOG_INFO, "Sent memory usage to Tuya: %0.2f GB", memory_usage);
 		}
-		sleep(0);
+		sleep(5);
 	}
 
 cleanup:
