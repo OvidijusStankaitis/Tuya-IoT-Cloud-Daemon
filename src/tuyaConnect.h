@@ -13,6 +13,6 @@ struct Device
 };
 
 int tuya_connect(tuya_mqtt_context_t *client, char dId[], char dSecret[]);
-void send_memory_usage_to_tuya(tuya_mqtt_context_t *client, long int memory_usage, char deviceId[]);
+void send_memory_usage_to_tuya(tuya_mqtt_context_t *client, double memory_usage, char deviceId[]);
 
 #endif

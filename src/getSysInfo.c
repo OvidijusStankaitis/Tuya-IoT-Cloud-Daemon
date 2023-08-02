@@ -4,7 +4,7 @@
 
 #include "getSysInfo.h"
 
-long int get_memory_usage()
+double get_memory_usage()
 {
     FILE *file = fopen("/proc/meminfo", "r");
     if (file == NULL)
@@ -13,27 +13,17 @@ long int get_memory_usage()
         return -1;
     }
 
-    int total_memory;
-    int free_memory;
-    int buffers;
-    int cached;
+    double total_memory;
+    double free_memory;
 
     char line[256];
     while (fgets(line, sizeof(line), file))
     {
-        if (sscanf(line, "MemTotal: %d kB", &total_memory))
+        if (sscanf(line, "MemTotal: %lf kB", &total_memory))
         {
             continue;
         }
-        else if (sscanf(line, "MemFree: %d kB", &free_memory))
-        {
-            continue;
-        }
-        else if (sscanf(line, "Buffers: %d kB", &buffers))
-        {
-            continue;
-        }
-        else if (sscanf(line, "Cached: %d kB", &cached))
+        else if (sscanf(line, "MemAvailable: %lf kB", &free_memory))
         {
             continue;
         }
@@ -41,7 +31,6 @@ long int get_memory_usage()
 
     fclose(file);
 
-    long int used_memory = (total_memory - free_memory - buffers - cached) * 1024;
-    syslog(LOG_INFO, "Memory usage calculated: %ld", used_memory);
+    double used_memory = (total_memory - free_memory) / (1024*1024);
     return used_memory;
 }

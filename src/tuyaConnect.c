@@ -79,15 +79,15 @@ int tuya_connect(tuya_mqtt_context_t *client, char *dId, char *dSecret)
     if (ret != OPRT_OK)
     {
         syslog(LOG_ERR, "Failed to connect to Tuya");
-        return -1;
+        return 1;
     }
-    
+
     return ret;
 }
 
-void send_memory_usage_to_tuya(tuya_mqtt_context_t *client, long int memory_usage, char *deviceId)
+void send_memory_usage_to_tuya(tuya_mqtt_context_t *client, double memory_usage, char *deviceId)
 {
     char data[256];
-    snprintf(data, sizeof(data), "{\"MemoryUsage\":{\"value\":%ld}}", memory_usage);
+    snprintf(data, sizeof(data), "{\"MemoryUsage\":{\"value\":%0.2f GB}}", memory_usage);
     tuyalink_thing_property_report(client, deviceId, data);
 }
