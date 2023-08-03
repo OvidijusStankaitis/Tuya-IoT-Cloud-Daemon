@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <syslog.h>
+#include <stdlib.h>
 
 #include "tuya_error_code.h"
 #include "system_interface.h"
@@ -19,11 +20,36 @@ static void outToFile(char *str)
     fclose(fp);
 }
 
-static char *parse_string(const char *json_string)
-{
+#include "cJSON.h"
+#include <string.h>
+
+char* parse_string(const char *json_string) {
     cJSON *json_data = cJSON_Parse(json_string);
+    if (json_data == NULL) {
+        syslog(LOG_ERR, "Failed to parse JSON");
+        return NULL;
+    }
+
     cJSON *inputParams = cJSON_GetObjectItemCaseSensitive(json_data, "inputParams");
+    if (inputParams == NULL) {
+        syslog(LOG_ERR, "Failed to parse JSON");
+        cJSON_Delete(json_data);
+        return NULL;
+    }
+
     cJSON *string_item = cJSON_GetObjectItemCaseSensitive(inputParams, "string");
+    if (string_item == NULL) {
+        syslog(LOG_ERR, "Failed to parse JSON");
+        cJSON_Delete(json_data);
+        return NULL;
+    }
+
+    if (!cJSON_IsString(string_item)) {
+        syslog(LOG_ERR, "Failed to parse JSON");
+        cJSON_Delete(json_data);
+        return NULL;
+    }
+
     char *result = strdup(string_item->valuestring);
     cJSON_Delete(json_data);
     return result;
@@ -47,7 +73,10 @@ static void on_messages(tuya_mqtt_context_t *context, void *user_data, const tuy
     case THING_TYPE_ACTION_EXECUTE:
         outToFile(msg->data_string);
         char *result = parse_string(msg->data_string);
-        outToFile(result);
+        if (result != NULL) {
+            outToFile(result);
+            free(result);
+        }
         break;
     default:
         break;
