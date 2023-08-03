@@ -117,6 +117,6 @@ int tuya_connect(tuya_mqtt_context_t *client, char *dId, char *dSecret)
 void send_memory_usage_to_tuya(tuya_mqtt_context_t *client, double memory_usage, char *deviceId)
 {
     char data[256];
-    snprintf(data, sizeof(data), "{\"MemoryUsage\":{\"value\":%0.2f GB}}", memory_usage);
+    snprintf(data, sizeof(data), "{\"MemoryUsage\":{\"value\":%0.2f}}", memory_usage);
     tuyalink_thing_property_report(client, deviceId, data);
 }
